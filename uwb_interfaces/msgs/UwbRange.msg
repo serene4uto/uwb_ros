@@ -1,2 +1,2 @@
 uint32[] anchor_ids
-float[] range_values
+float32[] range_values
