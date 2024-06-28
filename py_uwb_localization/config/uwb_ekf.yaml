@@ -1,0 +1,33 @@
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0  # Hz
+    sensor_timeout: 0.1  # Seconds
+    two_d_mode: false  # Set to true if you are only working in 2D
+
+    # Robot's initial state
+    initial_state:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+
+    # Frame IDs
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+
+    # Sensor data topic subscriptions
+    odom0: /uwb_tag_odom
+    odom0_config: [true, true, true,  # Use x, y, z positions
+                   false, false, false,  # Use roll, pitch, yaw orientations
+                   false, false, false,  # No linear velocities
+                   false, false, false,  # No angular velocities
+                   false, false, false]  # No accelerations
+    odom0_queue_size: 10
+    odom0_differential: false
+    odom0_relative: false
+    odom0_pose_use_child_frame: false
+    odom0_pose_rejection_threshold: 5.0
+    odom0_twist_rejection_threshold: 1.0
