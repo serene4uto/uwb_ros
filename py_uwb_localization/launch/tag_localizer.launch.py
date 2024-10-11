@@ -13,18 +13,18 @@ def generate_launch_description():
         output='screen'
     )
 
-    ekf_filter_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[os.path.join(get_package_share_directory("py_uwb_localization"), 'config', 'uwb_ekf.yaml')],
+    # ekf_filter_node = Node(
+    #     package='robot_localization',
+    #     executable='ekf_node',
+    #     name='ekf_filter_node',
+    #     output='screen',
+    #     parameters=[os.path.join(get_package_share_directory("py_uwb_localization"), 'config', 'uwb_ekf.yaml')],
 
-    )
+    # )
     
     ld = LaunchDescription()
 
     ld.add_action(tag_localizer_node)
-    ld.add_action(ekf_filter_node)
+    # ld.add_action(ekf_filter_node)
 
     return ld

@@ -1,4 +1,5 @@
 import rclpy
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 from rclpy.node import Node
 from uwb_interfaces.msg import UwbRange
 from nav_msgs.msg import Odometry
@@ -10,13 +11,15 @@ import time
 
 MAX_NUM_ANCHORS = 4
 
+
+
 def multilateration(distances):
     # Anchor positions
     anchors = np.array([
-        [0.0, 0.0, 0.93],
+        [0.0, 0.0, 0.94],
         [1.683, 0.0, 1.75],
-        [1.683, 1.25, 2.065],
-        [0.0, 1.25, 1.33]
+        [1.683, 1.205, 2.06],
+        [0.0, 1.205, 1.33]
     ])
 
     # Function to minimize
@@ -73,12 +76,18 @@ class UwbTagLocalizer(Node):
     def __init__(self):
         super().__init__('uwb_tag_localizer')
         self.get_logger().info('UwbTagLocalizer node started')
+        
+        #  set qos best effort
+        qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            depth=10
+        )
 
         self.uwb_range_sub = self.create_subscription(
             UwbRange,
-            'uros_esp32_uwb_tag_range',
+            'tag2___uros_uwb_tag_range',
             self.uwb_range_callback,
-            10
+            qos_profile
         )
 
         self.uwb_point_raw_pub = self.create_publisher(
@@ -109,16 +118,24 @@ class UwbTagLocalizer(Node):
         self.last_timestamp = self.get_clock().now()
 
     def uwb_range_callback(self, msg):
-        distances = []
+        distances = {
+            "388" : 0,
+            "644" : 0,
+            "900" : 0,
+            "1156" : 0
+        }
         try:
-            for anchor_id in range(1, MAX_NUM_ANCHORS + 1):
-                index = msg.anchor_ids.index(anchor_id)
-                distances.append(msg.range_values[index])
+            for anchor_idx in range(MAX_NUM_ANCHORS):
+                # distances.append(msg.range_values[index])
+                distances[str(msg.anchor_ids[anchor_idx])] = msg.range_values[msg.anchor_ids.index(msg.anchor_ids[anchor_idx])]
         except ValueError as e:
             self.get_logger().error(f"Anchor ID not found: {e}")
             return
+        
+        # reorder
+        
 
-        estimated_position = multilateration(distances)
+        estimated_position = multilateration(list(distances.values()))
         self.get_logger().info(f"Estimated position: {estimated_position}")
 
         # Publish the raw position
