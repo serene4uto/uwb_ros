@@ -11,8 +11,6 @@ import time
 
 MAX_NUM_ANCHORS = 4
 
-
-
 def multilateration(distances):
     # Anchor positions
     anchors = np.array([
@@ -136,7 +134,7 @@ class UwbTagLocalizer(Node):
         
 
         estimated_position = multilateration(list(distances.values()))
-        self.get_logger().info(f"Estimated position: {estimated_position}")
+        # self.get_logger().info(f"Estimated position: {estimated_position}")
 
         # Publish the raw position
         point_msg = PointStamped()
