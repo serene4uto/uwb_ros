@@ -222,13 +222,11 @@ class UwbTagLocalizer(Node):
 
         # eliminate spikes error
         displacement_xy = np.sqrt((point_msg.point.x - self.spikes_filtered_point_msg.point.x)**2 + (point_msg.point.y - self.spikes_filtered_point_msg.point.y)**2)
-        self.get_logger().info(f"Displacement: {displacement_xy}") #
+        self.get_logger().info(f"Displacement: {displacement_xy}") 
 
         # self.spikes_filtered_point_msg = point_msg
         if displacement_xy < UPPER_REJECT_THRESHOLD and displacement_xy > LOWER_REJECT_THRESHOLD:
             self.spikes_filtered_point_msg = point_msg
-            # self.spikes_filtered_point_msg.header.stamp = self.get_clock().now().to_msg()
-            # self.spikes_filtered_point_msg.header.frame_id = 'uwb_tag_link'
 
         #Publish the new filtered position
         self.uwb_spikes_filtered_pub.publish(self.spikes_filtered_point_msg)

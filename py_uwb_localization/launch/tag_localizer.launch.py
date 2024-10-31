@@ -1,5 +1,8 @@
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -24,6 +27,29 @@ def generate_launch_description():
     # Path to the anchor positions YAML file
     anchor_positions_file = os.path.join(package_dir, 'config', 'anchor_positions.yaml')
 
+    declare_use_error_eval_arg = DeclareLaunchArgument(
+        'use_error_eval',
+        default_value='false',
+        description='Whether to use the error evaluation node'
+    )
+
+    declare_use_uros_arg = DeclareLaunchArgument(
+        'use_uros',
+        default_value='false',
+        description='Whether to use the Micro-ROS Agent'
+    )
+
+    declare_use_rviz_arg = DeclareLaunchArgument(
+        'use_rviz',
+        default_value='false',
+        description='Whether to use RViz'
+    )
+
+    use_error_eval = LaunchConfiguration('use_error_eval')
+    use_uros = LaunchConfiguration('use_uros')
+    use_rviz = LaunchConfiguration('use_rviz')
+
+
     # Node to launch the UWB Tag Localizer
     tag_localizer_node = Node(
         package='py_uwb_localization',
@@ -39,7 +65,8 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         output='screen',
-        arguments=['-d', rviz_config_file]
+        arguments=['-d', rviz_config_file],
+        condition=IfCondition(use_rviz)
     )
 
     # Node to launch the Error Evaluation node
@@ -48,7 +75,8 @@ def generate_launch_description():
         executable='error_evaluation_node',
         name='error_evaluation',
         output='screen',
-        parameters=[{'ground_truth_file': yaml_file_path}]
+        parameters=[{'ground_truth_file': yaml_file_path}],
+        condition=IfCondition(use_error_eval)
     )
     
     # Node to launch the Micro-ROS Agent
@@ -56,22 +84,19 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent',
-        arguments=["udp4", "-p", "8888", "-v6"]
+        arguments=["udp4", "-p", "8888", "-v6"],
+        output='screen',
+        condition=IfCondition(use_uros)
     )
     
-    # Create the launch description and populate
-    ld = LaunchDescription()
 
-    # Add the UWB Tag Localizer node to the launch description
-    ld.add_action(tag_localizer_node)
-
-    # Add the RViz node to the launch description
-    ld.add_action(rviz_node)
-
-    # Add the Error Evaluation node to the launch description
-    ld.add_action(error_evaluation_node)
-    
-    # Add the Micro-ROS Agent node to the launch description
-    ld.add_action(uros_agent_node)
-
-    return ld
+    return LaunchDescription([
+        declare_use_error_eval_arg,
+        declare_use_uros_arg,
+        declare_use_rviz_arg,
+        
+        tag_localizer_node,
+        rviz_node,
+        error_evaluation_node,
+        uros_agent_node
+    ])
