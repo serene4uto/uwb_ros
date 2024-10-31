@@ -9,6 +9,9 @@ from scipy.optimize import least_squares
 import yaml
 import os
 
+UPPER_REJECT_THRESHOLD = 2.0 # meters, means if the distance between two points is greater than 0.5 meters, the new point will be rejected
+LOWER_REJECT_THRESHOLD = 0.5 # meters, means if the distance between two points is less than 0.1 meters, the new point will be rejected
+
 def multilateration(anchors, distances):
     
     # Initial guess
@@ -146,6 +149,17 @@ class UwbTagLocalizer(Node):
 
         self.last_timestamp = self.get_clock().now()
 
+        # ---------------------------------------------------------- 
+
+        self.uwb_spikes_filtered_pub = self.create_publisher(
+            PointStamped,
+            'uwb_tag_point/kf_spikes_filtered',
+            10
+        )
+        self.spikes_filtered_point_msg = None
+
+
+
     def uwb_range_callback(self, msg):
         # Extract distances corresponding to anchor IDs
         distances = {}
@@ -198,6 +212,28 @@ class UwbTagLocalizer(Node):
         point_msg.point.y = filtered_position[1]
         point_msg.point.z = filtered_position[2]
         self.uwb_point_ekf_pub.publish(point_msg)
+
+
+        # ----------------------------------------------------------
+
+        if self.spikes_filtered_point_msg is None:
+            self.spikes_filtered_point_msg = point_msg
+            return
+
+        # eliminate spikes error
+        displacement_xy = np.sqrt((point_msg.point.x - self.spikes_filtered_point_msg.point.x)**2 + (point_msg.point.y - self.spikes_filtered_point_msg.point.y)**2)
+        self.get_logger().info(f"Displacement: {displacement_xy}") #
+
+        # self.spikes_filtered_point_msg = point_msg
+        if displacement_xy < UPPER_REJECT_THRESHOLD and displacement_xy > LOWER_REJECT_THRESHOLD:
+            self.spikes_filtered_point_msg = point_msg
+            # self.spikes_filtered_point_msg.header.stamp = self.get_clock().now().to_msg()
+            # self.spikes_filtered_point_msg.header.frame_id = 'uwb_tag_link'
+
+        #Publish the new filtered position
+        self.uwb_spikes_filtered_pub.publish(self.spikes_filtered_point_msg)
+
+
 
 def main(args=None):
     rclpy.init(args=args)
