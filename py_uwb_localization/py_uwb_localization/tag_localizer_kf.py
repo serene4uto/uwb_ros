@@ -9,7 +9,7 @@ from scipy.optimize import least_squares
 import yaml
 import os
 
-UPPER_REJECT_THRESHOLD = 0.5 # meters, means if the distance between two points is greater than this meters, the new point will be rejected
+UPPER_REJECT_THRESHOLD = 0.8 # meters, means if the distance between two points is greater than this meters, the new point will be rejected
 LOWER_REJECT_THRESHOLD = 0.0 # meters, means if the distance between two points is less than this meters, the new point will be rejected
 
 def multilateration(anchors, distances):
